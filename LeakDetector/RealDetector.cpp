@@ -11,6 +11,7 @@ using namespace LDTools;
 // Relative Virtual Address to Virtual Address conversion.
 #define R2VA(modulebase, rva)  (((PBYTE)modulebase) + rva)
 
+
 bool RealDetector::m_trace = true;
 string RealDetector::m_moduleName;
 std::map<void*, HeapContex> RealDetector::m_heapTrace;
@@ -62,9 +63,9 @@ bool RealDetector::stop()
 		{
 			logMessage("\nNum %d:\n", i);
 			printTrace(heap.second.frames.data(), heap.second.frames.size());
-			logMessage("\n");
 			++i;
 		}
+		logMessage("\n");
 	}
 	else
 	{
@@ -161,27 +162,33 @@ bool RealDetector::patchImport(
 
 	assert(exportModuleName != NULL);
 
-	idte = (IMAGE_IMPORT_DESCRIPTOR*)ImageDirectoryEntryToDataEx((PVOID)importModule, TRUE,
-		IMAGE_DIRECTORY_ENTRY_IMPORT, &size, &section);
-	if (idte == NULL) {
+	idte = (IMAGE_IMPORT_DESCRIPTOR*)ImageDirectoryEntryToDataEx((PVOID)importModule, 
+		TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size, &section);
+	if (idte == NULL) 
+	{
 		logMessage("patchImport failed: idte == NULL\n");
 		return false;
 	}
-	while (idte->OriginalFirstThunk != 0x0) {
-		if (strcmp((PCHAR)R2VA(importModule, idte->Name), exportModuleName) == 0) {
+	while (idte->FirstThunk != 0x0) 
+	{
+		if (strcmp((PCHAR)R2VA(importModule, idte->Name), exportModuleName) == 0) 
+		{
 			break;
 		}
 		idte++;
 	}
-	if (idte->OriginalFirstThunk == 0x0) {
-		logMessage("patchImport failed: idte->OriginalFirstThunk == 0x0\n");
+	if (idte->FirstThunk == 0x0) 
+	{
+		logMessage("patchImport failed: idte->FirstThunk == 0x0\n");
 		return false;
 	}
 
-	if (exportModulePath != NULL) {
+	if (exportModulePath != NULL) 
+	{
 		exportmodule = GetModuleHandleA(exportModulePath);
 	}
-	else {
+	else 
+	{
 		exportmodule = GetModuleHandleA(exportModuleName);
 	}
 	assert(exportmodule != NULL);
@@ -189,11 +196,15 @@ bool RealDetector::patchImport(
 	assert(import != NULL);
 
 	iate = (IMAGE_THUNK_DATA*)R2VA(importModule, idte->FirstThunk);
-	while (iate->u1.Function != 0x0) {
-		if (iate->u1.Function == (DWORD_PTR)import) {
-			VirtualProtect(&iate->u1.Function, sizeof(iate->u1.Function), PAGE_READWRITE, &protect);
+	while (iate->u1.Function != 0x0) 
+	{
+		if (iate->u1.Function == (DWORD_PTR)import) 
+		{
+			VirtualProtect(&iate->u1.Function, sizeof(iate->u1.Function), 
+				PAGE_READWRITE, &protect);
 			iate->u1.Function = (DWORD_PTR)replacement;
-			VirtualProtect(&iate->u1.Function, sizeof(iate->u1.Function), protect, &protect);
+			VirtualProtect(&iate->u1.Function, sizeof(iate->u1.Function), 
+				protect, &protect);
 			return true;
 		}
 		iate++;
@@ -306,8 +317,8 @@ static CHAR *getLastErrorText(CHAR *pBuf, ULONG bufSize)
 
 void printLastError()
 {
-	char buf[1024];
-	getLastErrorText(buf, 1024);
+	char buf[BUF_SIZE];
+	getLastErrorText(buf, BUF_SIZE);
 	logMessage(buf);
 }
 
@@ -424,7 +435,7 @@ void printTrace(const UINT_PTR* pFrame/* = nullptr*/, size_t frameSize/* = 0*/)
 
 	// Use static here to increase performance, and avoid heap allocs.
 	// It's thread safe because of g_heapMapLock lock.
-	static char stack_line[1024] = "";
+	
 	bool isPrevFrameInternal = false;
 	DWORD NumChars = 0;
 
@@ -432,7 +443,10 @@ void printTrace(const UINT_PTR* pFrame/* = nullptr*/, size_t frameSize/* = 0*/)
 	const int resolvedCapacity = 62 * max_line_length;
 	const size_t allocedBytes = resolvedCapacity * sizeof(char);
 	char resolved[resolvedCapacity];
-	if (resolved) {
+	static char stack_line[resolvedCapacity] = "";
+
+	if (resolved) 
+	{
 		ZeroMemory(resolved, allocedBytes);
 	}
 	HANDLE hProcess = GetCurrentProcess();
@@ -460,9 +474,11 @@ void printTrace(const UINT_PTR* pFrame/* = nullptr*/, size_t frameSize/* = 0*/)
 		bool isFrameInternal = false;
 
 		// show one allocation function for context
-		if (NumChars > 0 && !isFrameInternal && isPrevFrameInternal) {
+		if (NumChars > 0 && !isFrameInternal && isPrevFrameInternal) 
+		{
 			resolvedLength += NumChars;
-			if (resolved) {
+			if (resolved) 
+			{
 				strncat_s(resolved, resolvedCapacity, stack_line, NumChars);
 			}
 		}
@@ -473,15 +489,17 @@ void printTrace(const UINT_PTR* pFrame/* = nullptr*/, size_t frameSize/* = 0*/)
 		NumChars = resolveFunction(programCounter, foundline ? &sourceInfo : NULL,
 			displacement, functionName, stack_line, _countof(stack_line));
 
-		if (NumChars > 0 && !isFrameInternal) {
+		if (NumChars > 0 && !isFrameInternal) 
+		{
 			resolvedLength += NumChars;
-			if (resolved) {
+			if (resolved) 
+			{
 				strncat_s(resolved, resolvedCapacity, stack_line, NumChars);
 			}
 		}
+
 	} // end for loop
 	logMessage(resolved);
-	logMessage("\n");
 
 	return;
 }

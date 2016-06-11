@@ -6,15 +6,16 @@
 #include <iostream>
 using namespace std;
 
+void new_some_mem()
+{
+	char* c = new char[12];
+	int* i = new int[4];
+}
+
 int main()
 {
 	auto ld = LDTools::LeakDetector("LeakDetectorTest.exe");
-
-	{
-		char* c = new char[12];
-		int* i = new int[4];
-	}
-
+	new_some_mem();
     return 0;
 }
 

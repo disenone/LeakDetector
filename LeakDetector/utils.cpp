@@ -8,7 +8,7 @@ MessageLoggerW ploggerw = nullptr;
 
 void logMessage(const char* fmt, ...)
 {
-	char buffer[1024];
+	char buffer[BUF_SIZE];
 	va_list args;
 	va_start(args, fmt);
 	vsnprintf(buffer, sizeof(buffer), fmt, args);
@@ -23,7 +23,7 @@ void logMessage(const char* fmt, ...)
 
 void logMessage(const wchar_t* fmt, ...)
 {
-	WCHAR buffer[10240];
+	WCHAR buffer[BUF_SIZE];
 	va_list args;
 	va_start(args, fmt);
 	_vsnwprintf_s(buffer, sizeof(buffer), fmt, args);

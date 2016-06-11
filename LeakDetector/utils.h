@@ -10,6 +10,8 @@
 #define EXPORT
 #endif
 
+#define BUF_SIZE 10240
+
 typedef void (*MessageLogger)(const char*);
 typedef void(*MessageLoggerW)(const wchar_t*);
 extern MessageLogger plogger;
